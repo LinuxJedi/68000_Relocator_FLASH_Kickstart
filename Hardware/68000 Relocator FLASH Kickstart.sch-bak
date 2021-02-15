@@ -1,6 +1,5 @@
 EESchema Schematic File Version 4
-LIBS:68000 Relocator FLASH Kickstart-cache
-EELAYER 26 0
+EELAYER 30 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
@@ -15,7 +14,7 @@ Comment3 "Provide Programmable FLASH Kickstart "
 Comment4 "Relocate Amiga 68000 CPU"
 $EndDescr
 $Comp
-L motorola:68000D U2
+L 68000-Relocator-FLASH-Kickstart-rescue:68000D-motorola U2
 U 1 1 595AB1EC
 P 5050 3000
 F 0 "U2" H 5050 3100 50  0000 C CNN
@@ -248,7 +247,7 @@ HALT
 Text Label 3850 4300 0    60   ~ 0
 RESET
 $Comp
-L memory:SST39SF040 U3
+L 68000-Relocator-FLASH-Kickstart-rescue:SST39SF040-memory U3
 U 1 1 5B917D80
 P 7750 2000
 F 0 "U3" H 7850 3300 50  0000 C CNN
@@ -259,7 +258,7 @@ F 3 "" H 7750 2300 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L memory:SST39SF040 U4
+L 68000-Relocator-FLASH-Kickstart-rescue:SST39SF040-memory U4
 U 1 1 5B917DAD
 P 10050 2000
 F 0 "U4" H 10150 3300 50  0000 C CNN
@@ -270,7 +269,7 @@ F 3 "" H 10050 2300 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L regul:LM1117-3.3 U6
+L 68000-Relocator-FLASH-Kickstart-rescue:LM1117-3.3-regul U6
 U 1 1 5B917E00
 P 1750 6850
 F 0 "U6" H 1600 6975 50  0000 C CNN
@@ -1239,28 +1238,6 @@ ROM1_WR
 Text Label 9600 4950 0    60   ~ 0
 ROM1_RD
 $Comp
-L conn:Conn_01x02_Male J3
-U 1 1 5B91F335
-P 6350 7050
-F 0 "J3" H 6350 7150 50  0000 C CNN
-F 1 "BLOCK" H 6350 6850 50  0000 C CNN
-F 2 "Pin_Headers:Pin_Header_Straight_1x02_Pitch2.54mm" H 6350 7050 50  0001 C CNN
-F 3 "" H 6350 7050 50  0001 C CNN
-	1    6350 7050
-	1    0    0    1   
-$EndComp
-$Comp
-L Device:R R1
-U 1 1 5B91F41B
-P 6550 6700
-F 0 "R1" V 6630 6700 50  0000 C CNN
-F 1 "10K" V 6550 6700 50  0000 C CNN
-F 2 "Resistors_SMD:R_0805_HandSoldering" V 6480 6700 50  0001 C CNN
-F 3 "" H 6550 6700 50  0001 C CNN
-	1    6550 6700
-	1    0    0    -1  
-$EndComp
-$Comp
 L Device:R R3
 U 1 1 5B91F808
 P 10150 5600
@@ -1335,10 +1312,7 @@ Wire Wire Line
 Wire Wire Line
 	1250 7250 1750 7250
 Wire Wire Line
-	6550 7250 6550 7050
-Wire Wire Line
 	4750 7150 4750 7250
-Connection ~ 4750 7250
 Wire Wire Line
 	4250 7150 4250 7250
 Connection ~ 4250 7250
@@ -1364,31 +1338,10 @@ Wire Wire Line
 	4250 6450 4250 6850
 Wire Wire Line
 	4250 6850 4750 6850
-$Comp
-L power:+3V3 #PWR05
-U 1 1 5B921F6D
-P 5550 6450
-F 0 "#PWR05" H 5550 6300 50  0001 C CNN
-F 1 "+3V3" H 5550 6590 50  0000 C CNN
-F 2 "" H 5550 6450 50  0001 C CNN
-F 3 "" H 5550 6450 50  0001 C CNN
-	1    5550 6450
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	6550 6550 6550 6500
-Wire Wire Line
-	5550 6450 5550 6500
 Wire Wire Line
 	3250 6850 3250 6450
 Wire Wire Line
 	2050 6850 2250 6850
-Wire Wire Line
-	6550 6950 6550 6850
-Wire Wire Line
-	6550 6500 5550 6500
-Text Label 6550 6950 0    60   ~ 0
-BLOCK
 $Comp
 L power:GND #PWR06
 U 1 1 5B943DAB
@@ -1476,7 +1429,7 @@ FLASH_A19
 Text Label 9450 2600 2    60   ~ 0
 FLASH_A19
 $Comp
-L conn:Conn_01x06_Male J4
+L 68000-Relocator-FLASH-Kickstart-rescue:Conn_01x06_Male-conn J4
 U 1 1 5B998A83
 P 1250 5800
 F 0 "J4" H 1250 6100 50  0000 C CNN
@@ -1543,7 +1496,7 @@ Wire Wire Line
 Wire Wire Line
 	8500 3450 8800 3450
 $Comp
-L XC9572VQ44:XC9572VQ44 U5
+L 68000-Relocator-FLASH-Kickstart-rescue:XC9572VQ44-XC9572VQ44 U5
 U 1 1 5BFC6E8A
 P 8900 4850
 F 0 "U5" H 8900 6428 50  0000 C CNN
@@ -1567,24 +1520,8 @@ Wire Wire Line
 	8900 6250 9000 6250
 Wire Wire Line
 	8550 6250 8800 6250
-Wire Wire Line
-	4750 7250 5550 7250
 $Comp
-L Mechanical:MountingHole_Pad H1
-U 1 1 5C0468A4
-P 5550 7150
-F 0 "H1" H 5650 7201 50  0000 L CNN
-F 1 "MountingHole_Pad" H 5650 7110 50  0000 L CNN
-F 2 "Mounting_Holes:MountingHole_3.2mm_M3_Pad" H 5550 7150 50  0001 C CNN
-F 3 "~" H 5550 7150 50  0001 C CNN
-	1    5550 7150
-	1    0    0    -1  
-$EndComp
-Connection ~ 5550 7250
-Wire Wire Line
-	5550 7250 6550 7250
-$Comp
-L motorola:68000D U1
+L 68000-Relocator-FLASH-Kickstart-rescue:68000D-motorola U1
 U 1 1 5C7B03A0
 P 2050 3000
 F 0 "U1" H 2050 3100 50  0000 C CNN
@@ -1594,6 +1531,13 @@ F 3 "" H 2050 3000 50  0001 C CNN
 	1    2050 3000
 	1    0    0    -1  
 $EndComp
+Wire Wire Line
+	8500 3450 7750 3450
+Wire Wire Line
+	7750 3450 7750 4350
+Wire Wire Line
+	7750 4350 8200 4350
+Connection ~ 8500 3450
 Wire Bus Line
 	11050 600  11050 1400
 Wire Bus Line
