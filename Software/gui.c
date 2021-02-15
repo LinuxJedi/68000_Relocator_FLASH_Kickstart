@@ -381,16 +381,29 @@ static void eraseFlash(struct ConfigDev *myCD)
     }
 }
 static tFlashCommandStatus programFlashLoop(ULONG fileSize, ULONG baseAddress,
-        APTR *pBuffer)
+        char *romFile)
 {
     tFlashCommandStatus flashCommandStatus = flashIdle;
     ULONG currentWordIndex = 0;
     ULONG breakCount = 0;
+    FILE *rFile = fopen(romFile, "rb");
+    UWORD rWord;
+    size_t rCount;
 
-    do
+    if (!rFile)
     {
-        writeFlashWord(baseAddress, currentWordIndex << 1,
-                       ((UWORD *)pBuffer)[currentWordIndex]);
+        return flashProgramError;
+    }
+
+    while((rCount = fread(&rWord, sizeof(UWORD), 1, rFile)))
+    {
+        if (rCount != 1)
+        {
+            fclose(rFile);
+            return flashProgramError;
+        }
+
+        writeFlashWord(baseAddress, currentWordIndex << 1, rWord);
 
         breakCount = 0;
 
@@ -402,8 +415,7 @@ static tFlashCommandStatus programFlashLoop(ULONG fileSize, ULONG baseAddress,
         }
         while ((flashCommandStatus != flashOK) && (breakCount < LOOP_TIMEOUT));
 
-        if (((UWORD *)pBuffer)[currentWordIndex] != (((UWORD *)
-                baseAddress)[currentWordIndex]))
+        if (rWord != (((UWORD *)baseAddress)[currentWordIndex]))
         {
             return flashProgramError;
         }
@@ -416,14 +428,12 @@ static tFlashCommandStatus programFlashLoop(ULONG fileSize, ULONG baseAddress,
 
         currentWordIndex += 1;
     }
-    while (currentWordIndex < (fileSize >> 1));
 
     return (flashCommandStatus);
 }
 
 static void flashRom(int romID, struct ConfigDev *myCD, struct Window *myWindow)
 {
-    APTR pBuffer = NULL;
     ULONG fileSize;
     char *romFile = GetFile();
 
@@ -433,51 +443,28 @@ static void flashRom(int romID, struct ConfigDev *myCD, struct Window *myWindow)
 
         if (readFileOK == readFileProgram)
         {
-            readFileProgram = readFileIntoMemoryHandler(romFile, fileSize, &pBuffer);
+            tFlashCommandStatus programFlashStatus = flashIdle;
+            ULONG baseAddress = (fileSize == KICKSTART_256K) ? ((ULONG)myCD->cd_BoardAddr +
+                                KICKSTART_256K) : (ULONG)myCD->cd_BoardAddr;
 
-            if (readFileOK == readFileProgram)
+            if (romID == 2)
             {
-                tFlashCommandStatus programFlashStatus = flashIdle;
-                ULONG baseAddress = (fileSize == KICKSTART_256K) ? ((ULONG)myCD->cd_BoardAddr +
-                                    KICKSTART_256K) : (ULONG)myCD->cd_BoardAddr;
-
-                if (romID == 2)
-                {
-                    baseAddress = baseAddress + (512 * 1024);
-                    WriteRomText("Flashing...", FlashROM2_buf, myWindow, &FlashROM2);
-                }
-                else
-                {
-                    WriteRomText("Flashing...", FlashROM1_buf, myWindow, &FlashROM1);
-                }
-
-                programFlashStatus = programFlashLoop(fileSize, baseAddress, pBuffer);
-
-                if (programFlashStatus != flashOK)
-                {
-                    rtEZRequest("An error occurred flashing the ROM.\nDid you erase first?", "OK",
-                                NULL, NULL);
-                }
-
-                freeFileHandler(fileSize);
-            }
-            else if (readFileNotFound == readFileProgram)
-            {
-                rtEZRequest("Could not read the ROM file.", "OK", NULL, NULL);
-            }
-            else if (readFileNoMemoryAllocated == readFileProgram)
-            {
-                rtEZRequest("Not enough memory to load the ROM file to flash.", "OK", NULL,
-                            NULL);
-            }
-            else if (readFileGeneralError == readFileProgram)
-            {
-                rtEZRequest("An error occurred reading the ROM file", "OK", NULL, NULL);
+                baseAddress = baseAddress + (512 * 1024);
+                WriteRomText("Flashing...", FlashROM2_buf, myWindow, &FlashROM2);
             }
             else
             {
-                rtEZRequest("Unknown error occurred, sorry!", "OK", NULL, NULL);
+                WriteRomText("Flashing...", FlashROM1_buf, myWindow, &FlashROM1);
             }
+
+            programFlashStatus = programFlashLoop(fileSize, baseAddress, romFile);
+
+            if (programFlashStatus != flashOK)
+            {
+                rtEZRequest("An error occurred flashing the ROM.\nDid you erase first?", "OK",
+                            NULL, NULL);
+            }
+
         }
         else
         {
@@ -485,7 +472,6 @@ static void flashRom(int romID, struct ConfigDev *myCD, struct Window *myWindow)
         }
 
         free(romFile);
-        free(pBuffer);
         getRom(romID, myCD, myWindow);
     }
 
@@ -639,7 +625,7 @@ int main(int argc, char **argv)
                     }
 
                     case GADABOUT:
-                        rtEZRequest("Flash Kickstart Programmer v1.0\nCreated by Andrew (LinuxJedi) Hutchings\nandrew@linuxjedi.co.uk\nThis software is released under a GPLv3 license\n\nBased on work by Paul Raspa.",
+                        rtEZRequest("Flash Kickstart Programmer v1.1\nCreated by Andrew (LinuxJedi) Hutchings\nandrew@linuxjedi.co.uk\nThis software is released under a GPLv3 license\n\nBased on work by Paul Raspa.",
                                     "Cool!", NULL, NULL);
                         break;
 
