@@ -513,10 +513,14 @@ int main()
     if (!(ReqToolsBase = (struct ReqToolsBase *)
                          OpenLibrary (REQTOOLSNAME, REQTOOLSVERSION)))
     {
-        myputs ("You need reqtools.library V38 or higher!\n"
-                "Please install it in your Libs: drirectory.\n");
+        if (!(ReqToolsBase = (struct ReqToolsBase *)
+                         OpenLibrary ("fk:libs13/reqtools.library", REQTOOLSVERSION)))
+        {
+            myputs ("You need reqtools.library V38 or higher!\n"
+                    "Please install it in your Libs: drirectory.\n");
 
-        exit (RETURN_FAIL);
+            exit (RETURN_FAIL);
+        }
     }
 
     /* Open any version expansion.library to read in ConfigDevs */
@@ -624,7 +628,7 @@ int main()
                     }
 
                     case GADABOUT:
-                        rtEZRequest("Flash Kickstart Programmer v1.2\nCreated by Andrew (LinuxJedi) Hutchings\nandrew@linuxjedi.co.uk\nThis software is released under a GPLv3 license\n\nBased on work by Paul Raspa.",
+                        rtEZRequest("Flash Kickstart Programmer v1.3\nCreated by Andrew (LinuxJedi) Hutchings\nandrew@linuxjedi.co.uk\nThis software is released under a GPLv3 license\n\nBased on work by Paul Raspa.",
                                     "Cool!", NULL, NULL);
                         break;
 
