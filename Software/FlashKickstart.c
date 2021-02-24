@@ -66,7 +66,7 @@ char eraseAlertMsg[] = "\x00\xC0\x14 ABOUT TO ERASE KICKSTART CHIPS \x00\x01" \
 /*****************************************************************************/
 
 int main(int argc, char **argv);
-tFlashCommandStatus programFlashLoop(ULONG fileSize, ULONG baseAddress, APTR * pBuffer);
+tFlashCommandStatus programFlashLoop(ULONG fileSize, ULONG baseAddress, char *romFile);
 
 // Compiler complains if we don't do this, can't see why
 struct ConfigDev *FindConfigDev( CONST struct ConfigDev *oldConfigDev, LONG manufacturer, LONG product );
@@ -131,14 +131,25 @@ static void getDeviceID(UBYTE manufacturer, UBYTE model)
     }
 }
 
-tFlashCommandStatus programFlashLoop(ULONG fileSize, ULONG baseAddress, APTR * pBuffer)
+tFlashCommandStatus programFlashLoop(ULONG fileSize, ULONG baseAddress, char *romFile)
 {
     tFlashCommandStatus flashCommandStatus = flashIdle;
     ULONG currentWordIndex = 0;
     ULONG breakCount = 0;
+    FILE *rFile = fopen(romFile, "rb");
+    UWORD rWord;
+    size_t rCount;
 
-    do {
-        writeFlashWord(baseAddress, currentWordIndex << 1, ((UWORD *)pBuffer)[currentWordIndex]);
+    if (!rFile)
+    {
+        printf("Could not ROM open file\n");
+        return flashProgramError;
+    }
+
+
+    while((rCount = fread(&rWord, sizeof(UWORD), 1, rFile)))
+    {
+        writeFlashWord(baseAddress, currentWordIndex << 1, rWord);
 
         breakCount = 0;
 
@@ -148,9 +159,9 @@ tFlashCommandStatus programFlashLoop(ULONG fileSize, ULONG baseAddress, APTR * p
 
         } while ((flashCommandStatus != flashOK) && (breakCount < LOOP_TIMEOUT));
 
-        if (((UWORD *)pBuffer)[currentWordIndex] != (((UWORD *)baseAddress)[currentWordIndex]))
+        if (rWord != (((UWORD *)baseAddress)[currentWordIndex]))
         {
-            printf("Failed at ADDR: 0x%06X, SRC: 0x%04X, DEST 0x%04X\n", (unsigned)(currentWordIndex << 1), ((UWORD *)pBuffer)[currentWordIndex], ((UWORD *)baseAddress)[currentWordIndex]);
+            printf("Failed at ADDR: 0x%06X, SRC: 0x%04X, DEST 0x%04X\n", (unsigned)(currentWordIndex << 1), rWord, ((UWORD *)baseAddress)[currentWordIndex]);
             return flashProgramError;
         }
 
@@ -162,7 +173,7 @@ tFlashCommandStatus programFlashLoop(ULONG fileSize, ULONG baseAddress, APTR * p
         }
 
         currentWordIndex += 1;
-    } while (currentWordIndex < (fileSize >> 1));
+    }
 
     return (flashCommandStatus);
 }
@@ -180,7 +191,7 @@ int main(int argc, char **argv)
     /* Check if application has been started with correct parameters */
     if (argc <= 1)
     {
-        printf("FlashKickstart v3.1\n");
+        printf("FlashKickstart v3.2\n");
         printf("usage: FlashKickstart <option> <filename>\n");
         printf(" -i\tFLASH CHIP INFO\n");
         printf(" -e\tERASE\n");
@@ -322,17 +333,12 @@ int main(int argc, char **argv)
             {
                 if ((argc > 3) && argv[2] && argv[3])
                 {
-                    APTR pBuffer;
                     ULONG fileSize;
 
                     tReadFileHandler readFileProgram = getFileSize(argv[2], &fileSize);
 
                     if (readFileOK == readFileProgram)
                     {
-                        readFileProgram = readFileIntoMemoryHandler(argv[2], fileSize, &pBuffer);
-
-                        if (readFileOK == readFileProgram)
-                        {
                             if (getRomInfo((UBYTE*)0xF80000, &rInfo))
                             {
                                 printf("Failed to get Kickstart ROM info\n");
@@ -363,8 +369,18 @@ int main(int argc, char **argv)
                                     displayRomInfo(&rInfo, NULL);
                                 }
                             }
+                            FILE *romFile = fopen(argv[2], "r");
 
-                            if (getRomInfo((UBYTE*)pBuffer, &rInfo))
+                            if (!romFile)
+                            {
+                                printf("Could no open ROM file\n");
+                                return 1;
+                            }
+
+                            UBYTE *buf = (UBYTE *)malloc(1024 * sizeof(UBYTE));
+                            fread(buf, 1, 1023, romFile);
+
+                            if (getRomInfo(buf, &rInfo))
                             {
                                 char ch;
                                 printf("Failed to get File ROM info\n");
@@ -381,6 +397,9 @@ int main(int argc, char **argv)
                                 printf("File ROM: ");
                                 displayRomInfo(&rInfo, NULL);
                             }
+
+                            fclose(romFile);
+
                             tFlashCommandStatus programFlashStatus = flashIdle;
                             ULONG baseAddress = (fileSize == KICKSTART_256K) ? ((ULONG)myCD->cd_BoardAddr + KICKSTART_256K) : (ULONG)myCD->cd_BoardAddr;
 
@@ -394,7 +413,7 @@ int main(int argc, char **argv)
                                 return 1;
                             }
 
-                            programFlashStatus = programFlashLoop(fileSize, baseAddress, pBuffer);
+                            programFlashStatus = programFlashLoop(fileSize, baseAddress, argv[2]);
 
                             if (programFlashStatus != flashOK)
                             {
@@ -404,25 +423,6 @@ int main(int argc, char **argv)
                             {
                                 printf("FLASH device programmed OK\n");
                             }
-
-                            freeFileHandler(fileSize);
-                        }
-                        else if (readFileNotFound == readFileProgram)
-                        {
-                            printf("Failed to open kickstart image: %s\n", argv[2]);
-                        }
-                        else if (readFileNoMemoryAllocated == readFileProgram)
-                        {
-                            printf("Failed to allocate memory for file: %s\n", argv[2]);
-                        }
-                        else if (readFileGeneralError == readFileProgram)
-                        {
-                            printf("Failed to read into memory file: %s\n\n", argv[2]);
-                        }
-                        else
-                        {
-                            printf("Unhandled error in readFileIntoMemoryHandler()\n");
-                        }
                     }
                     else
                     {
