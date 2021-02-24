@@ -68,15 +68,12 @@ char eraseAlertMsg[] = "\x00\xC0\x14 ABOUT TO ERASE KICKSTART CHIPS \x00\x01" \
 int main(int argc, char **argv);
 tFlashCommandStatus programFlashLoop(ULONG fileSize, ULONG baseAddress, char *romFile);
 
-// Compiler complains if we don't do this, can't see why
-struct ConfigDev *FindConfigDev( CONST struct ConfigDev *oldConfigDev, LONG manufacturer, LONG product );
-
 /*****************************************************************************/
 /* Local Code ****************************************************************/
 /*****************************************************************************/
 static void eraseFlash(struct ConfigDev *myCD)
 {
-    if (!DisplayAlert(RECOVERY_ALERT, (CONST_STRPTR)eraseAlertMsg, 52))
+    if (!DisplayAlert(RECOVERY_ALERT, eraseAlertMsg, 52))
         return;
 
     if (flashOK == eraseCompleteFlash((ULONG)myCD->cd_BoardAddr))
@@ -202,7 +199,7 @@ int main(int argc, char **argv)
     }
 
     /* Open any version intuition.library to support displayAlert */
-    IntuitionBase = OpenLibrary((CONST_STRPTR)"intuition.library", 0);
+    IntuitionBase = OpenLibrary("intuition.library", 0);
 
     /* Check if opened correctly, otherwise exit with message and error */
     if (NULL == IntuitionBase)
@@ -212,7 +209,7 @@ int main(int argc, char **argv)
     }
 
     /* Open any version expansion.library to read in ConfigDevs */
-    ExpansionBase = OpenLibrary((CONST_STRPTR)"expansion.library", 0L);
+    ExpansionBase = OpenLibrary("expansion.library", 0L);
 
     /* Check if opened correctly, otherwise exit with message and error */
     if (NULL == ExpansionBase)
@@ -244,7 +241,7 @@ int main(int argc, char **argv)
     {
         printf("FLASH Kickstart Hardware identified with configuration:\n");
         printf("Board address: 0x%06X\n", (unsigned)myCD->cd_BoardAddr);
-        printf("Flash size: %ldK\n", ((ULONG)myCD->cd_BoardSize)/1024);
+        printf("Flash size: %luK\n", ((ULONG)myCD->cd_BoardSize)/1024);
     }
 
     while ((argc > 1) && (argv[1][0] == '-'))
@@ -287,7 +284,7 @@ int main(int argc, char **argv)
                     printf("Flash ROM 1: ");
                     displayRomInfo(&rInfo, NULL);
                 }
-                if (myCD->cd_BoardSize > 512*1024)
+                if ((ULONG)myCD->cd_BoardSize > 512*1024)
                 {
                     if (getRomInfo((UBYTE*)(myCD->cd_BoardAddr + (512 * 1024)), &rInfo))
                     {
@@ -357,7 +354,7 @@ int main(int argc, char **argv)
                                 printf("Flash ROM 1: ");
                                 displayRomInfo(&rInfo, NULL);
                             }
-                            if (myCD->cd_BoardSize > 512*1024)
+                            if ((ULONG)myCD->cd_BoardSize > 512*1024)
                             {
                                 if (getRomInfo((UBYTE*)(myCD->cd_BoardAddr + (512 * 1024)), &rInfo))
                                 {

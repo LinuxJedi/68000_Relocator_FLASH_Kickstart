@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "RomInfo.h"
 #include "Helpers.h"
@@ -127,7 +128,7 @@ struct Gadget QuitButton =
     RELVERIFY,
     BOOLGADGET,
     (APTR) &SharedBorders[0], (APTR) &SharedBordersInvert[0],
-    &QuitButton_text, NULL, NULL, GADQUIT, NULL
+    &QuitButton_text, 0, NULL, GADQUIT, NULL
 };
 
 struct IntuiText AboutButton_text =
@@ -144,7 +145,7 @@ struct Gadget AboutButton =
     RELVERIFY,
     BOOLGADGET,
     (APTR) &SharedBorders[0], (APTR) &SharedBordersInvert[0],
-    &AboutButton_text, NULL, NULL, GADABOUT, NULL
+    &AboutButton_text, 0, NULL, GADABOUT, NULL
 };
 
 struct IntuiText EraseButton_text =
@@ -161,7 +162,7 @@ struct Gadget EraseButton =
     RELVERIFY,
     BOOLGADGET,
     (APTR) &SharedBorders[2], (APTR) &SharedBordersInvert[2],
-    &EraseButton_text, NULL, NULL, GADERASE, NULL
+    &EraseButton_text, 0, NULL, GADERASE, NULL
 };
 
 struct IntuiText LoadFile_text =
@@ -178,7 +179,7 @@ struct Gadget LoadFile2 =
     RELVERIFY,
     BOOLGADGET,
     (APTR) &SharedBorders[4], (APTR) &SharedBordersInvert[4],
-    &LoadFile_text, NULL, NULL, GADFILE2, NULL
+    &LoadFile_text, 0, NULL, GADFILE2, NULL
 };
 
 #define GADFILE1 3
@@ -190,7 +191,7 @@ struct Gadget LoadFile1 =
     RELVERIFY,
     BOOLGADGET,
     (APTR) &SharedBorders[4], (APTR) &SharedBordersInvert[4],
-    &LoadFile_text, NULL, NULL, GADFILE1, NULL
+    &LoadFile_text, 0, NULL, GADFILE1, NULL
 };
 
 UBYTE FlashROM2_buf[64];
@@ -210,7 +211,7 @@ struct Gadget FlashROM2 =
     0,
     BOOLGADGET,
     (APTR) &SharedBorders[6], NULL,
-    &FlashROM2_text, NULL, NULL, GADFLASH2, NULL
+    &FlashROM2_text[0], 0, NULL, GADFLASH2, NULL
 };
 
 UBYTE FlashROM1_buf[64];
@@ -230,7 +231,7 @@ struct Gadget FlashROM1 =
     0,
     BOOLGADGET,
     (APTR) &SharedBorders[6], NULL,
-    &FlashROM1_text, NULL, NULL, GADFLASH1, NULL
+    &FlashROM1_text[0], 0, NULL, GADFLASH1, NULL
 };
 
 UBYTE Motherboard_buf[64];
@@ -250,7 +251,7 @@ struct Gadget Motherboard =
     0,
     BOOLGADGET,
     (APTR) &SharedBorders[6], NULL,
-    &Motherboard_text, NULL, NULL, GADMOTHER, NULL
+    &Motherboard_text[0], 0, NULL, GADMOTHER, NULL
 };
 
 
@@ -280,8 +281,9 @@ static char *GetFile()
     char *fullpath = malloc(256 * sizeof(char));
     FILE *romFile;
     struct romInfo romInfo;
+    UBYTE *buf = NULL;
 
-    if ((filereq = rtAllocRequestA (RT_FILEREQ, NULL)))
+    if ((filereq = (struct rtFileRequester*)rtAllocRequestA (RT_FILEREQ, NULL)))
     {
         filename[0] = 0;
 
@@ -308,7 +310,7 @@ static char *GetFile()
         return NULL;
     }
 
-    UBYTE *buf = (UBYTE *)malloc(1024 * sizeof(UBYTE));
+    buf = (UBYTE *)malloc(1024 * sizeof(UBYTE));
     fread(buf, 1, 1023, romFile);
 
     if (getRomInfo(buf, &romInfo))
@@ -487,8 +489,8 @@ struct NewWindow winlayout =
     20, 20,
     512, 128,
     -1, -1,
-    IDCMP_CLOSEWINDOW | GADGETUP | GADGETDOWN,
-    WFLG_SIZEGADGET | WFLG_DRAGBAR | WFLG_DEPTHGADGET |    WFLG_CLOSEGADGET | WFLG_ACTIVATE,
+    CLOSEWINDOW | GADGETUP | GADGETDOWN,
+    ACTIVATE | WINDOWCLOSE | WINDOWDRAG | WINDOWDEPTH,
     &Motherboard, NULL,
     (STRPTR)"Flash Kickstart Programmer",
     NULL, NULL,
@@ -497,31 +499,28 @@ struct NewWindow winlayout =
     WBENCHSCREEN
 };
 
-int main(int argc, char **argv)
+int main()
 {
     struct Window *myWindow;
     char librarypath[128];
 
-    if (argc > 1)
+    IntuitionBase = (struct IntuitionBase *) OpenLibrary ("intuition.library", 0);
+    if (IntuitionBase == NULL)
     {
-        strcpy(librarypath, argv[1]);
+        return 0;
     }
 
     if (!(ReqToolsBase = (struct ReqToolsBase *)
                          OpenLibrary (REQTOOLSNAME, REQTOOLSVERSION)))
     {
-        if ((argc == 0) || !(ReqToolsBase = (struct ReqToolsBase *)
-                                            OpenLibrary (librarypath, REQTOOLSVERSION)))
-        {
+        myputs ("You need reqtools.library V38 or higher!\n"
+                "Please install it in your Libs: drirectory.\n");
 
-            myputs ("You need reqtools.library V38 or higher!\n"
-                    "Please install it in your Libs: drirectory.\n");
-            exit (RETURN_FAIL);
-        }
+        exit (RETURN_FAIL);
     }
 
     /* Open any version expansion.library to read in ConfigDevs */
-    ExpansionBase = OpenLibrary((CONST_STRPTR)"expansion.library", 0L);
+    ExpansionBase = OpenLibrary("expansion.library", 0L);
 
     /* Check if opened correctly, otherwise exit with message and error */
     if (NULL == ExpansionBase)
@@ -548,7 +547,7 @@ int main(int argc, char **argv)
     {
         getRom(1, myCD, myWindow);
 
-        if (myCD->cd_BoardSize <= 512 * 1024)
+        if ((ULONG)myCD->cd_BoardSize <= (ULONG)(512 * 1024))
         {
             // 020 chips in use, no ROM2
             OffGadget(&FlashROM2, myWindow, NULL);
@@ -577,16 +576,16 @@ int main(int argc, char **argv)
         struct IntuiMessage *message;
         Wait(1 << myWindow->UserPort->mp_SigBit);
 
-        while ((message = GetMsg(myWindow->UserPort)))
+        while ((message = (struct IntuiMessage*)GetMsg(myWindow->UserPort)))
         {
             ULONG class = message->Class;
             //code = message->Code;
-            struct Gadget *address = message->IAddress;
+            struct Gadget *address = (struct Gadget*)message->IAddress;
             //x = message->MouseX;
             //y = message- >MouseY;
-            ReplyMsg(message);
+            ReplyMsg((struct Message*)message);
 
-            if (class == IDCMP_CLOSEWINDOW)
+            if (class == CLOSEWINDOW)
             {
                 closewin = true;
             }
@@ -625,7 +624,7 @@ int main(int argc, char **argv)
                     }
 
                     case GADABOUT:
-                        rtEZRequest("Flash Kickstart Programmer v1.1\nCreated by Andrew (LinuxJedi) Hutchings\nandrew@linuxjedi.co.uk\nThis software is released under a GPLv3 license\n\nBased on work by Paul Raspa.",
+                        rtEZRequest("Flash Kickstart Programmer v1.2\nCreated by Andrew (LinuxJedi) Hutchings\nandrew@linuxjedi.co.uk\nThis software is released under a GPLv3 license\n\nBased on work by Paul Raspa.",
                                     "Cool!", NULL, NULL);
                         break;
 

@@ -46,8 +46,6 @@ typedef enum {
 /* Prototypes ****************************************************************/
 /*****************************************************************************/
 
-tReadFileHandler readFileIntoMemoryHandler(char *fileName, ULONG bufferSize, APTR * pMemoryBase);
-extern tReadFileHandler freeFileHandler(ULONG bufferSize);
 extern tReadFileHandler getFileSize(char *fileName, ULONG * pFileSize);
 extern void hexDump(char *desc, void *addr, int len);
 

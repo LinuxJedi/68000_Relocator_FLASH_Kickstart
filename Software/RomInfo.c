@@ -19,6 +19,7 @@
 */
 
 #include <clib/intuition_protos.h>
+#include <clib/exec_protos.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -124,12 +125,18 @@ void displayRomInfo(struct romInfo *info, char **output)
 {
     const char *kversion;
     const char *size;
+    char *ret = NULL;
 
+    if (output)
+    {
+        ret = malloc(64 * sizeof(char));
+        *output = ret;
+    }
     if (info->id == ROM_TYPE_BLANK)
     {
         if (output)
         {
-            char *ret = strdup("Erased");
+            sprintf(ret, "Erased");
             *output = ret;
         }
         else
@@ -195,8 +202,6 @@ void displayRomInfo(struct romInfo *info, char **output)
 
     if (output)
     {
-        char *ret = malloc(64 * sizeof(char));
-        *output = ret;
         if (info->isDiagRom)
         {
             snprintf(ret, 64, "DiagRom V%hu.%hu.%hu %s", info->major, info->minor, info->extra, size);
