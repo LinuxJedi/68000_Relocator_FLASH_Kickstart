@@ -1,3 +1,4 @@
+# Requires xdftool from amitools (https://github.com/cnvogelg/amitools/)
 xdftool fk.adf create
 xdftool fk.adf format "FK"
 xdftool fk.adf write FK
