@@ -8,4 +8,3 @@ xdftool fk.adf write libs13
 xdftool fk.adf write libs20
 xdftool fk.adf write libs13.info
 xdftool fk.adf write libs20.info
-

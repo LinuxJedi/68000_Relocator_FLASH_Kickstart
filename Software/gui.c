@@ -277,7 +277,7 @@ static void WriteRomText(const char *text, UBYTE *buffer, struct Window *window,
 static char *GetFile()
 {
     struct rtFileRequester *filereq;
-    char filename[34];
+    char filename[128];
     char *fullpath = malloc(256 * sizeof(char));
     FILE *romFile;
     struct romInfo romInfo;
@@ -300,13 +300,25 @@ static char *GetFile()
         rtEZRequest("Out of memory!", "Oh no!", NULL, NULL);
     }
 
-    snprintf(fullpath, 255, "%s/%s", filereq->Dir, filename);
+    // Turns out WB doesn't like DF0:/filename.rom
+    if (filereq->Dir[(strlen(filereq->Dir) - 1)] == ':')
+    {
+        snprintf(fullpath, 255, "%s%s", filereq->Dir, filename);
+    }
+    else if (!strlen(filereq->Dir))
+    {
+        snprintf(fullpath, 255, "%s", filename);
+    }
+    else
+    {
+        snprintf(fullpath, 255, "%s/%s", filereq->Dir, filename);
+    }
     romFile = fopen(fullpath, "r");
 
     if (!romFile)
     {
         free(fullpath);
-        rtEZRequest("Could no open ROM file", "OK", NULL, NULL);
+        rtEZRequest("Could not open ROM file", "OK", NULL, NULL);
         return NULL;
     }
 
@@ -340,7 +352,8 @@ static void getRom(int romID, struct ConfigDev *myCD, struct Window *myWindow)
     }
     else
     {
-        getRomInfo((UBYTE *)(myCD->cd_BoardAddr + (512 * 1024)), &rInfo);
+        ULONG romAddr = (ULONG)myCD->cd_BoardAddr + (512 * 1024);
+        getRomInfo((UBYTE *)romAddr, &rInfo);
     }
 
     displayRomInfo(&rInfo, &rtext);
@@ -628,7 +641,7 @@ int main()
                     }
 
                     case GADABOUT:
-                        rtEZRequest("Flash Kickstart Programmer v1.3\nCreated by Andrew (LinuxJedi) Hutchings\nandrew@linuxjedi.co.uk\nThis software is released under a GPLv3 license\n\nBased on work by Paul Raspa.",
+                        rtEZRequest("Flash Kickstart Programmer v1.4\nCreated by Andrew (LinuxJedi) Hutchings\nandrew@linuxjedi.co.uk\nThis software is released under a GPLv3 license\n\nBased on work by Paul Raspa.",
                                     "Cool!", NULL, NULL);
                         break;
 

@@ -188,7 +188,7 @@ int main(int argc, char **argv)
     /* Check if application has been started with correct parameters */
     if (argc <= 1)
     {
-        printf("FlashKickstart v3.2\n");
+        printf("FlashKickstart v3.3\n");
         printf("usage: FlashKickstart <option> <filename>\n");
         printf(" -i\tFLASH CHIP INFO\n");
         printf(" -e\tERASE\n");
@@ -286,7 +286,8 @@ int main(int argc, char **argv)
                 }
                 if ((ULONG)myCD->cd_BoardSize > 512*1024)
                 {
-                    if (getRomInfo((UBYTE*)(myCD->cd_BoardAddr + (512 * 1024)), &rInfo))
+                    ULONG romAddr = (ULONG)myCD->cd_BoardAddr + (512 * 1024);
+                    if (getRomInfo((UBYTE*)romAddr, &rInfo))
                     {
                         printf("Failed to get Flash ROM 2 info\n");
                     }
@@ -356,7 +357,8 @@ int main(int argc, char **argv)
                             }
                             if ((ULONG)myCD->cd_BoardSize > 512*1024)
                             {
-                                if (getRomInfo((UBYTE*)(myCD->cd_BoardAddr + (512 * 1024)), &rInfo))
+                                ULONG romAddr = (ULONG)myCD->cd_BoardAddr + (512 * 1024);
+                                if (getRomInfo((UBYTE*)romAddr, &rInfo))
                                 {
                                     printf("Failed to get Flash ROM 2 info\n");
                                 }
