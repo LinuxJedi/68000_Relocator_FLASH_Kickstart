@@ -36,6 +36,11 @@ Logic/iseconfig/
 Logic/_xmsgs/
 Logic/FLASH_KICKSTART.tim
 Logic/FLASH_KICKSTART.tspec
+Logic/FLASH_KICKSTART.isc
+Logic/FLASH_KICKSTART.ngc_xst.xrpt
+Logic/FLASH_KICKSTART.srp
+Logic/netlist.lst
+
 *.zip
 *.lha
 *.adf
