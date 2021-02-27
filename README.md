@@ -5,9 +5,6 @@ It now supports two flashed kickstart ROMs and has a cleaner interface.
 
 **NOTE:** If you are using FK 3.0 command line tool or FlashKickstart GUI tool you will need to use the 3.0 Xilinx firmware too. Otherwise hi/lo ROMs will be the mapped to the same address.
 
-# Warning
-This design has not been compliance tested and will not be. It may cause damage to your A500. I take no responsibility for this. I accept no responsibility for any damage to any equipment that results from the use of this design and its components. IT IS ENTIRELY AT YOUR OWN RISK!
-
 # Overview
 To allow for Flash Kickstart images to be mapped in the same address space as existing ROM Kickstart without the need to remove the existing ROM. This design is targeting an accelerated A500(+) system which also require a CPU relocation.
 
