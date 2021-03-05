@@ -30,146 +30,155 @@
     Revision 2.1 - 26.12.2020:
     Switch power-on default to boot from motherboard ROM.
 
-    Revision 3.0 - 28.12.2029:
+    Revision 3.0 - 28.12.2020:
     Hook up A19 and allow for a multi-rom switch if 1MB is installed
+
+    Revision 3.1 - 03.03.2021:
+    Tidy up firmware a bit
 
 */
 
  module FLASH_KICKSTART(
-		input CLK,
-		input E_CLK,
+    input CLK, //CLK is unused
+    input E_CLK,
 
-		input RESET_n,
-		input CPU_AS_n,
-		input LDS_n,
-		input UDS_n,
-		input RW,
+    input RESET_n,
+    input CPU_AS_n,
+    input LDS_n,
+    input UDS_n,
+    input RW,
 
-		output MB_AS_n,
-		output DTACK_n,
+    output MB_AS_n,
+    output DTACK_n,
 
-		input [23:16] ADDRESS_HIGH,
-		input [7:1] ADDRESS_LOW,
-		inout [15:12] DATA,
+    input [23:16] ADDRESS_HIGH,
+    input [7:1] ADDRESS_LOW,
+    inout [15:12] DATA,
 
-		output [1:0] FLASH_WR_n,
-		output [1:0] FLASH_RD_n,
-		output FLASH_A19,
+    output [1:0] FLASH_WR_n,
+    output [1:0] FLASH_RD_n,
+    output FLASH_A19,
 
-		input SIZE_512K
-		);
+    input SIZE_512K
+);
 
-		reg useMotherboardKickstart = 1'b1;
-		reg [19:0] switchCounter = 20'd0;
-		reg hasSwitched = 1'b0;
+// Autoconfig params
+localparam [15:0] manufacturer_id = 16'h07B9;
+localparam [7:0] product_id = 8'd104;
+localparam [31:0] serial = 32'h00000301; // Version number
 
-		reg autoConfigComplete = 1'b0;
-		reg [3:0] flashBase = 4'h0;
-		reg flashBaseValid = 1'b0;
+// Change this to 0 to boot from the first flash ROM at power-on
+reg useMotherboardKickstart = 1'b1;
 
-		reg overlay_n = 1'b0;
+reg [19:0] switchCounter = 20'd0;
+reg hasSwitched = 1'b0;
 
-		reg [3:0] dataOut = 4'h0;
+reg autoConfigComplete = 1'b0;
+reg [3:0] flashBase = 4'h0;
+reg flashBaseValid = 1'b0;
 
-        reg useLowRom = 1'b0;
+reg overlay_n = 1'b0;
 
-		wire ciaRange               = ADDRESS_HIGH[23:16] == 8'hBF;
-		wire autoConfigRange        = ADDRESS_HIGH[23:16] == 8'hE8;
-		wire kickstartRange         = ADDRESS_HIGH[23:19] == 5'h1F;
-		wire kickstartOverlayRange  = ADDRESS_HIGH[23:16] == 8'h00;
-		wire flashRange             = ADDRESS_HIGH[23:20] == flashBase && flashBaseValid;
+reg [3:0] dataOut = 4'h0;
 
-		wire relocatorKickstartAccess   = !useMotherboardKickstart && (kickstartRange || (!overlay_n && kickstartOverlayRange));
-		wire autoConfigAccess           = useMotherboardKickstart && autoConfigRange && !autoConfigComplete;
-		wire flashAccess                = useMotherboardKickstart && flashRange;
+reg useLowRom = 1'b0;
 
-		wire relocatorAccess            = relocatorKickstartAccess || autoConfigAccess || flashAccess;
+wire ciaRange               = ADDRESS_HIGH[23:16] == 8'hBF;
+wire autoConfigRange        = ADDRESS_HIGH[23:16] == 8'hE8;
+wire kickstartRange         = ADDRESS_HIGH[23:19] == 5'h1F;
+wire kickstartOverlayRange  = ADDRESS_HIGH[23:16] == 8'h00;
+wire flashRange             = ADDRESS_HIGH[23:20] == flashBase && flashBaseValid;
 
-        assign FLASH_A19 = SIZE_512K ? 0 : (ADDRESS_HIGH[19] & !useLowRom);
+wire relocatorKickstartAccess   = !useMotherboardKickstart && (kickstartRange || (!overlay_n && kickstartOverlayRange));
+wire autoConfigAccess           = useMotherboardKickstart && autoConfigRange && !autoConfigComplete;
+wire flashAccess                = useMotherboardKickstart && flashRange;
 
-		always @(posedge E_CLK or posedge RESET_n)
-		begin
-			if (RESET_n)
-			begin
-				switchCounter <= 20'd0;
-				hasSwitched <= 1'b0;
-			end
-			else
-			begin
-				switchCounter <= switchCounter + 20'd1;
-                if (!hasSwitched && (&switchCounter))
-				begin
-                    hasSwitched <= 1'b1;
-                    useMotherboardKickstart <= (!useLowRom || SIZE_512K) && !useMotherboardKickstart;
-                    useLowRom <= !useLowRom && useMotherboardKickstart && !SIZE_512K;
-                end
-			end
-		end
+wire relocatorAccess            = relocatorKickstartAccess || autoConfigAccess || flashAccess;
 
-		always @(posedge CPU_AS_n or negedge RESET_n)
-		begin
-			if (!RESET_n)
-				overlay_n <= 1'b0;
-			else if (ciaRange)
-				overlay_n <= 1'b1;
-		end
+assign FLASH_A19 = SIZE_512K ? 0 : (ADDRESS_HIGH[19] & !useLowRom);
 
-		always @(posedge CPU_AS_n or negedge RESET_n)
-		begin
-			if (!RESET_n)
-			begin
-				flashBase <= 4'h0;
-				flashBaseValid <= 1'b0;
-				autoConfigComplete <= 1'b0;
-			end
-			else if (autoConfigAccess && !RW)
-			begin
-				if (ADDRESS_LOW == 7'h24)
-				begin
-					flashBase <= DATA;
-					flashBaseValid <= 1'b1;
-					autoConfigComplete <= 1'b1;
-				end
-				else if (ADDRESS_LOW == 7'h26)
-					autoConfigComplete <= 1'b1;
-			end
-		end
+always @(posedge E_CLK or posedge RESET_n)
+begin
+    if (RESET_n)
+    begin
+        switchCounter <= 20'd0;
+        hasSwitched <= 1'b0;
+    end
+    else
+    begin
+        switchCounter <= switchCounter + 20'd1;
+        if (!hasSwitched && (&switchCounter))
+        begin
+            hasSwitched <= 1'b1;
+            useMotherboardKickstart <= (!useLowRom || SIZE_512K) && !useMotherboardKickstart;
+            useLowRom <= !useLowRom && useMotherboardKickstart && !SIZE_512K;
+        end
+    end
+end
 
-		assign DTACK_n = !CPU_AS_n && relocatorAccess ? 1'b0 : 1'bZ;
-		assign MB_AS_n = !(!CPU_AS_n && !relocatorAccess);
+always @(posedge CPU_AS_n or negedge RESET_n)
+begin
+    if (!RESET_n)
+        overlay_n <= 1'b0;
+    else if (ciaRange)
+        overlay_n <= 1'b1;
+end
 
-		assign FLASH_RD_n = !CPU_AS_n && (relocatorKickstartAccess || flashAccess) && RW ? {UDS_n, LDS_n} : 2'b11;
-		assign FLASH_WR_n = !CPU_AS_n && flashAccess && !RW ? {UDS_n, LDS_n} : 2'b11;
+always @(posedge CPU_AS_n or negedge RESET_n)
+begin
+    if (!RESET_n)
+    begin
+        flashBase <= 4'h0;
+        flashBaseValid <= 1'b0;
+        autoConfigComplete <= 1'b0;
+    end
+    else if (autoConfigAccess && !RW)
+    begin
+        if (ADDRESS_LOW == 7'h24)
+        begin
+            flashBase <= DATA;
+            flashBaseValid <= 1'b1;
+            autoConfigComplete <= 1'b1;
+        end
+        else if (ADDRESS_LOW == 7'h26)
+            autoConfigComplete <= 1'b1;
+    end
+end
 
-		assign DATA = !CPU_AS_n && autoConfigAccess && RW ? dataOut : 4'bZZZZ;
+assign DTACK_n = !CPU_AS_n && relocatorAccess ? 1'b0 : 1'bZ;
+assign MB_AS_n = !(!CPU_AS_n && !relocatorAccess);
 
-		always @(negedge CPU_AS_n)
-		begin
-			if (ADDRESS_LOW[7:6] == 2'd0)
-				case (ADDRESS_LOW[5:1])
-					5'h00: dataOut <= 4'hC;  // (00)
-					5'h01: dataOut <= SIZE_512K ? 4'h4 : 4'h5; // (02) 512K / 1M
-					5'h02: dataOut <= 4'h9;  // (04)
-					5'h03: dataOut <= 4'h7;  // (06)
-					5'h04: dataOut <= 4'h7;  // (08/0A)
-					5'h05: dataOut <= 4'hF;
-					5'h06: dataOut <= 4'hF;  // (0C/0E)
-					5'h07: dataOut <= 4'hF;
-					5'h08: dataOut <= 4'hF;  // (10/12)
-					5'h09: dataOut <= 4'h8;
-					5'h0A: dataOut <= 4'h4;  // (14/16)
-					5'h0B: dataOut <= 4'h6;
-					5'h0C: dataOut <= 4'hA;  // (18/1A)
-					5'h0D: dataOut <= 4'hF;
-					5'h0E: dataOut <= 4'hB;  // (1C/1E)
-					5'h0F: dataOut <= 4'hE;
-					5'h10: dataOut <= 4'hA;  // (20/22)
-					5'h11: dataOut <= 4'hA;
-					5'h12: dataOut <= 4'hB;  // (24/26)
-					5'h13: dataOut <= 4'h3;
-					default: dataOut <= 4'hF;
-				endcase
-			else
-				dataOut <= 4'hF;
-		end
-	endmodule
+assign FLASH_RD_n = !CPU_AS_n && (relocatorKickstartAccess || flashAccess) && RW ? {UDS_n, LDS_n} : 2'b11;
+assign FLASH_WR_n = !CPU_AS_n && flashAccess && !RW ? {UDS_n, LDS_n} : 2'b11;
+
+assign DATA = !CPU_AS_n && autoConfigAccess && RW ? dataOut : 4'bZZZZ;
+
+always @(negedge CPU_AS_n)
+begin
+    if (ADDRESS_LOW[7:6] == 2'd0)
+        case (ADDRESS_LOW[5:1])
+            5'h00: dataOut <= 4'b1100; // Zorro II, non-RAM board
+            5'h01: dataOut <= SIZE_512K ? 4'b0100 : 4'b0101; // 512K / 1M
+            // Inverted bits from here
+            5'h02: dataOut <= ~product_id[7:4];
+            5'h03: dataOut <= ~product_id[3:0];
+            5'h04: dataOut <= ~4'b1000; // 8 Meg area, board cannot be shut-up
+            // 5 - 7 reserved, set to inverted zero using fall-through
+            5'h08: dataOut <= ~manufacturer_id[15:12];
+            5'h09: dataOut <= ~manufacturer_id[11:8];
+            5'h0A: dataOut <= ~manufacturer_id[7:4];
+            5'h0B: dataOut <= ~manufacturer_id[3:0];
+            5'h0C: dataOut <= ~serial[31:28];
+            5'h0D: dataOut <= ~serial[27:24];
+            5'h0E: dataOut <= ~serial[23:20];
+            5'h0F: dataOut <= ~serial[19:16];
+            5'h10: dataOut <= ~serial[15:12];
+            5'h11: dataOut <= ~serial[11:8];
+            5'h12: dataOut <= ~serial[7:4];
+            5'h13: dataOut <= ~serial[3:0];
+            default: dataOut <= 4'hF;
+        endcase
+    else
+        dataOut <= 4'hF;
+end
+endmodule

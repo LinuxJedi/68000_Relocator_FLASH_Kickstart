@@ -195,7 +195,7 @@ tFlashCommandStatus resetFlashDevice(ULONG address)
 /* Parameters:  ULONG address, UBYTE sectorNumber                            */
 /* Description: Erases a specific sector number from flash device            */
 /*****************************************************************************/
-tFlashCommandStatus eraseFlashSector(ULONG address, UBYTE sectorNumber)
+tFlashCommandStatus eraseFlashSector(ULONG address, ULONG sectorNumber)
 {
     tFlashCommandStatus flashCommandStatus = flashIdle;
 
@@ -205,18 +205,17 @@ tFlashCommandStatus eraseFlashSector(ULONG address, UBYTE sectorNumber)
 
     if (sectorNumber < MAX_SECTORS)
     {
-        if (flashOK == unlockFlashDevice(address + (SECTOR_SIZE * sectorNumber)))
+        if (flashOK == unlockFlashDevice(address))
         {
             *(UWORD *)(address + FLASH_ERASE_ADDR_1) = FLASH_ERASE_DATA_1;
 #ifndef NDEBUG
             printf("FLOW: FLASH_ERASE_ADDR_1 0x%X, FLASH_ERASE_DATA_1 0x%X\n", (address + FLASH_ERASE_ADDR_1), FLASH_ERASE_DATA_1);
 #endif
-
-            if (flashOK == unlockFlashDevice(address + (SECTOR_SIZE * sectorNumber)))
+            if (flashOK == unlockFlashDevice(address))
             {
-                *(UWORD *)(address + (sectorNumber << 16)) = FLASH_SECTOR_DATA_1;
+                *(UWORD *)(address + (sectorNumber << 13)) = FLASH_SECTOR_DATA_1;
 #ifndef NDEBUG
-                printf("FLOW: Sector Address 0x%X, FLASH_SECTOR_DATA_1 0x%X\n", address + (sectorNumber << 16), FLASH_SECTOR_DATA_1);
+                printf("FLOW: Sector Address 0x%X, FLASH_SECTOR_DATA_1 0x%X\n", address + (sectorNumber << 13), FLASH_SECTOR_DATA_1);
 #endif
                 flashCommandStatus = flashOK;
             }

@@ -27,8 +27,8 @@
 /* Defines *******************************************************************/
 /*****************************************************************************/
 
-#define SECTOR_SIZE		        0x10000
-#define MAX_SECTORS             8
+#define SECTOR_SIZE		        0x1000 // 4KB
+#define MAX_SECTORS             128
 
 #define TOGGLE_STATUS           0x4040
 
@@ -83,7 +83,7 @@ extern tFlashCommandStatus unlockFlashDevice(ULONG address);
 extern tFlashCommandStatus readManufactureID(ULONG address, UWORD * pManufactureID);
 extern tFlashCommandStatus readDeviceID(ULONG address, UWORD * pDeviceID);
 extern tFlashCommandStatus resetFlashDevice(ULONG address);
-extern tFlashCommandStatus eraseFlashSector(ULONG address, UBYTE sectorNumber);
+extern tFlashCommandStatus eraseFlashSector(ULONG address, ULONG sectorNumber);
 extern tFlashCommandStatus eraseCompleteFlash(ULONG address);
 extern tFlashCommandStatus writeFlashWord(ULONG baseAddress, ULONG writeAddress, UWORD data);
 

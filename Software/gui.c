@@ -327,7 +327,9 @@ static char *GetFile()
 
     if (getRomInfo(buf, &romInfo))
     {
-        int res = rtEZRequest("ROM file does not appear to be valid.\nIt could be byte swapped which will not work.\nContinue anyway?",
+        int res = rtEZRequest("ROM file does not appear to be valid.\n"
+                              "It could be byte swapped which will not work.\n"
+                              "Continue anyway?",
                               "Yes|No", NULL, NULL);
 
         if (!res)
@@ -395,6 +397,49 @@ static void eraseFlash(struct ConfigDev *myCD)
         rtEZRequest("Flash chips did not accept the erase command.", "OK", NULL, NULL);
     }
 }
+
+static void eraseFlashLoop(int romID, ULONG baseAddress)
+{
+    UBYTE sector = 0;
+    UBYTE end = 0;
+    ULONG breakCount = 0;
+    tFlashCommandStatus flashCommandStatus = flashIdle;
+
+    if (romID == 2)
+    {
+        sector = MAX_SECTORS / 2;
+        end = MAX_SECTORS;
+    }
+    else
+    {
+        end = MAX_SECTORS / 2;
+    }
+
+    for (; sector < end; sector++)
+    {
+        flashCommandStatus = eraseFlashSector(baseAddress, sector);
+        if (flashCommandStatus != flashOK)
+        {
+            rtEZRequest("An error occurred erasing the flash chips.", "OK", NULL, NULL);
+            return;
+        }
+
+        breakCount = 0;
+        do
+        {
+            flashCommandStatus = checkFlashStatus(baseAddress + (sector << 13));
+            breakCount++;
+        }
+        while ((flashCommandStatus != flashOK) && (breakCount < LOOP_TIMEOUT));
+
+        if (breakCount == LOOP_TIMEOUT)
+        {
+            rtEZRequest("A timeout occurred erasing the flash chips.", "OK", NULL, NULL);
+            return;
+        }
+    }
+}
+
 static tFlashCommandStatus programFlashLoop(ULONG fileSize, ULONG baseAddress,
         char *romFile)
 {
@@ -552,7 +597,10 @@ int main()
 
     if (NULL == myCD)
     {
-        rtEZRequest("Flash Kickstart board not found.\nYou might be booting from one of its ROMs.\nWhich means accessing ROMs here is disabled.\n\nPlease reboot into the Motherboard ROM and try again.",
+        rtEZRequest("Flash Kickstart board not found.\n"
+                    "You might be booting from one of its ROMs.\n"
+                    "Which means accessing ROMs here is disabled.\n\n"
+                    "Please reboot into the Motherboard ROM and try again.",
                     "OK", NULL, NULL);
         OffGadget(&EraseButton, myWindow, NULL);
         OffGadget(&LoadFile1, myWindow, NULL);
@@ -566,7 +614,7 @@ int main()
 
         if ((ULONG)myCD->cd_BoardSize <= (ULONG)(512 * 1024))
         {
-            // 020 chips in use, no ROM2
+            // Jumper removed, only 1 ROM
             OffGadget(&FlashROM2, myWindow, NULL);
             OffGadget(&LoadFile2, myWindow, NULL);
         }
@@ -612,19 +660,42 @@ int main()
                 {
                     case GADFILE1:
                     {
+                        int res = rtEZRequest("This action will erase ROM slot 1\n"
+                                              "Continue anyway?",
+                                              "Yes|No", NULL, NULL);
+
+                        if (!res)
+                        {
+                            break;
+                        }
+
+                        WriteRomText("Erasing...", FlashROM1_buf, myWindow, &FlashROM1);
+                        eraseFlashLoop(1, (ULONG)myCD->cd_BoardAddr);
                         flashRom(1, myCD, myWindow);
                         break;
                     }
 
                     case GADFILE2:
                     {
+                        int res = rtEZRequest("This action will erase ROM slot 2\n"
+                                              "Continue anyway?",
+                                              "Yes|No", NULL, NULL);
+
+                        if (!res)
+                        {
+                            break;
+                        }
+
+                        WriteRomText("Erasing...", FlashROM2_buf, myWindow, &FlashROM1);
+                        eraseFlashLoop(2, (ULONG)myCD->cd_BoardAddr);
                         flashRom(2, myCD, myWindow);
                         break;
                     }
 
                     case GADERASE:
                     {
-                        int res = rtEZRequest("This action will erase both ROM slots 1 and 2\nContinue anyway?",
+                        int res = rtEZRequest("This action will erase both ROM slots 1 and 2\n"
+                                              "Continue anyway?",
                                               "Yes|No", NULL, NULL);
 
                         if (!res)
@@ -641,9 +712,26 @@ int main()
                     }
 
                     case GADABOUT:
-                        rtEZRequest("Flash Kickstart Programmer v1.4\nCreated by Andrew (LinuxJedi) Hutchings\nandrew@linuxjedi.co.uk\nThis software is released under a GPLv3 license\n\nBased on work by Paul Raspa.",
-                                    "Cool!", NULL, NULL);
-                        break;
+                        {
+                            char bVersion[12];
+                            if (NULL == myCD)
+                            {
+                                sprintf(bVersion, "Not found");
+                            }
+                            else
+                            {
+                                sprintf(bVersion, "0x%08X", (unsigned)myCD->cd_Rom.er_SerialNumber);
+                            }
+
+                            rtEZRequest("Flash Kickstart Programmer v1.5\n"
+                                        "Created by Andrew (LinuxJedi) Hutchings\n"
+                                        "andrew@linuxjedi.co.uk\n"
+                                        "This software is released under a GPLv3 license\n\n"
+                                        "Based on work by Paul Raspa.\n\n"
+                                        "Board version: %s",
+                                        "Cool!", NULL, NULL, bVersion);
+                            break;
+                        }
 
                     case GADQUIT:
                         closewin = true;

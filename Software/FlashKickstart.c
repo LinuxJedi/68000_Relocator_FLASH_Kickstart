@@ -188,7 +188,7 @@ int main(int argc, char **argv)
     /* Check if application has been started with correct parameters */
     if (argc <= 1)
     {
-        printf("FlashKickstart v3.3\n");
+        printf("FlashKickstart v3.4\n");
         printf("usage: FlashKickstart <option> <filename>\n");
         printf(" -i\tFLASH CHIP INFO\n");
         printf(" -e\tERASE\n");
@@ -241,6 +241,7 @@ int main(int argc, char **argv)
     {
         printf("FLASH Kickstart Hardware identified with configuration:\n");
         printf("Board address: 0x%06X\n", (unsigned)myCD->cd_BoardAddr);
+        printf("Board serial number: 0x%08X\n", (unsigned)myCD->cd_Rom.er_SerialNumber);
         printf("Flash size: %luK\n", ((ULONG)myCD->cd_BoardSize)/1024);
     }
 
