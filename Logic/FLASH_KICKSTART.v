@@ -36,6 +36,10 @@
     Revision 3.1 - 03.03.2021:
     Tidy up firmware a bit
 
+    Revision 3.2 - 10.03.2021:
+    Fix version number serial (there are special releases)
+    Allow board to work outside the 8MB area
+
 */
 
  module FLASH_KICKSTART(
@@ -65,7 +69,7 @@
 // Autoconfig params
 localparam [15:0] manufacturer_id = 16'h07B9;
 localparam [7:0] product_id = 8'd104;
-localparam [31:0] serial = 32'h00000301; // Version number
+localparam [31:0] serial = 32'h00003020; // Version number
 
 // Change this to 0 to boot from the first flash ROM at power-on
 reg useMotherboardKickstart = 1'b1;
@@ -162,7 +166,7 @@ begin
             // Inverted bits from here
             5'h02: dataOut <= ~product_id[7:4];
             5'h03: dataOut <= ~product_id[3:0];
-            5'h04: dataOut <= ~4'b1000; // 8 Meg area, board cannot be shut-up
+            5'h04: dataOut <= ~4'b0000; // Any memory area, not just 8MN. Board cannot be shut-up
             // 5 - 7 reserved, set to inverted zero using fall-through
             5'h08: dataOut <= ~manufacturer_id[15:12];
             5'h09: dataOut <= ~manufacturer_id[11:8];
