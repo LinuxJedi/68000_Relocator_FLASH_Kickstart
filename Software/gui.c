@@ -440,8 +440,7 @@ static void eraseFlashLoop(int romID, ULONG baseAddress)
     }
 }
 
-static tFlashCommandStatus programFlashLoop(ULONG fileSize, ULONG baseAddress,
-        char *romFile)
+static tFlashCommandStatus programFlashLoop(ULONG baseAddress, char *romFile)
 {
     tFlashCommandStatus flashCommandStatus = flashIdle;
     ULONG currentWordIndex = 0;
@@ -504,8 +503,7 @@ static void flashRom(int romID, struct ConfigDev *myCD, struct Window *myWindow)
         if (readFileOK == readFileProgram)
         {
             tFlashCommandStatus programFlashStatus = flashIdle;
-            ULONG baseAddress = (fileSize == KICKSTART_256K) ? ((ULONG)myCD->cd_BoardAddr +
-                                KICKSTART_256K) : (ULONG)myCD->cd_BoardAddr;
+            ULONG baseAddress = (ULONG)myCD->cd_BoardAddr;
 
             if (romID == 2)
             {
@@ -517,7 +515,13 @@ static void flashRom(int romID, struct ConfigDev *myCD, struct Window *myWindow)
                 WriteRomText("Flashing...", FlashROM1_buf, myWindow, &FlashROM1);
             }
 
-            programFlashStatus = programFlashLoop(fileSize, baseAddress, romFile);
+            programFlashStatus = programFlashLoop(baseAddress, romFile);
+
+            if (fileSize == KICKSTART_256K)
+            {
+                baseAddress += KICKSTART_256K;
+                programFlashStatus = programFlashLoop(baseAddress, romFile);
+            }
 
             if (programFlashStatus != flashOK)
             {
@@ -723,7 +727,7 @@ int main()
                                 sprintf(bVersion, "0x%08X", (unsigned)myCD->cd_Rom.er_SerialNumber);
                             }
 
-                            rtEZRequest("Flash Kickstart Programmer v1.5\n"
+                            rtEZRequest("Flash Kickstart Programmer v1.6\n"
                                         "Created by Andrew (LinuxJedi) Hutchings\n"
                                         "andrew@linuxjedi.co.uk\n"
                                         "This software is released under a GPLv3 license\n\n"
