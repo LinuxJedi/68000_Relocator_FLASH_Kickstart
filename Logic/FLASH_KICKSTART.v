@@ -40,6 +40,9 @@
     Fix version number serial (there are special releases)
     Allow board to work outside the 8MB area
 
+    Revision 3.3 - 06.04.2021:
+    Fix issue which causes boot loop with ROM2 on some Amigas
+
 */
 
  module FLASH_KICKSTART(
@@ -69,10 +72,11 @@
 // Autoconfig params
 localparam [15:0] manufacturer_id = 16'h07B9;
 localparam [7:0] product_id = 8'd104;
-localparam [31:0] serial = 32'h00003020; // Version number
+localparam [31:0] serial = 32'h00003030; // Version number
 
-// Change this to 0 to boot from the first flash ROM at power-on
-reg useMotherboardKickstart = 1'b1;
+// Change this to 0 to boot from the flash ROMs at power-on
+// Also change useLowRom to 1 to boot from the first flash ROM at power-on
+reg useMotherboardKickstart = 1'b0;
 
 reg [19:0] switchCounter = 20'd0;
 reg hasSwitched = 1'b0;
@@ -85,7 +89,7 @@ reg overlay_n = 1'b0;
 
 reg [3:0] dataOut = 4'h0;
 
-reg useLowRom = 1'b0;
+reg useLowRom = 1'b1;
 
 wire ciaRange               = ADDRESS_HIGH[23:16] == 8'hBF;
 wire autoConfigRange        = ADDRESS_HIGH[23:16] == 8'hE8;
@@ -99,7 +103,9 @@ wire flashAccess                = useMotherboardKickstart && flashRange;
 
 wire relocatorAccess            = relocatorKickstartAccess || autoConfigAccess || flashAccess;
 
-assign FLASH_A19 = SIZE_512K ? 0 : (ADDRESS_HIGH[19] & !useLowRom);
+// A19 needs to be address 19 with motherboard ROM
+// Otherwise the inverse of useLowRom
+assign FLASH_A19 = SIZE_512K ? 0 : useMotherboardKickstart ? ADDRESS_HIGH[19] : !useLowRom;
 
 always @(posedge E_CLK or posedge RESET_n)
 begin

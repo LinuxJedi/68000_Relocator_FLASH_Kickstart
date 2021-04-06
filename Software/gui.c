@@ -39,6 +39,8 @@
 struct ReqToolsBase *ReqToolsBase;
 struct Library *ExpansionBase = NULL;
 
+#define VERSION "v1.7"
+
 #define LOOP_TIMEOUT        (ULONG)10000
 #define KICKSTART_256K      (ULONG)(256 * 1024)
 
@@ -507,7 +509,17 @@ static void flashRom(int romID, struct ConfigDev *myCD, struct Window *myWindow)
 
             if (romID == 2)
             {
-                baseAddress = baseAddress + (512 * 1024);
+                WriteRomText("Erasing...", FlashROM2_buf, myWindow, &FlashROM2);
+            }
+            else
+            {
+                WriteRomText("Erasing...", FlashROM1_buf, myWindow, &FlashROM1);
+            }
+            eraseFlashLoop(romID, (ULONG)myCD->cd_BoardAddr);
+
+            if (romID == 2)
+            {
+                baseAddress += (512 * 1024);
                 WriteRomText("Flashing...", FlashROM2_buf, myWindow, &FlashROM2);
             }
             else
@@ -517,7 +529,7 @@ static void flashRom(int romID, struct ConfigDev *myCD, struct Window *myWindow)
 
             programFlashStatus = programFlashLoop(baseAddress, romFile);
 
-            if (fileSize == KICKSTART_256K)
+            if ((programFlashStatus == flashOK) && (fileSize == KICKSTART_256K))
             {
                 baseAddress += KICKSTART_256K;
                 programFlashStatus = programFlashLoop(baseAddress, romFile);
@@ -525,7 +537,7 @@ static void flashRom(int romID, struct ConfigDev *myCD, struct Window *myWindow)
 
             if (programFlashStatus != flashOK)
             {
-                rtEZRequest("An error occurred flashing the ROM.\nDid you erase first?", "OK",
+                rtEZRequest("An error occurred flashing the ROM.", "OK",
                             NULL, NULL);
             }
 
@@ -664,34 +676,12 @@ int main()
                 {
                     case GADFILE1:
                     {
-                        int res = rtEZRequest("This action will erase ROM slot 1\n"
-                                              "Continue anyway?",
-                                              "Yes|No", NULL, NULL);
-
-                        if (!res)
-                        {
-                            break;
-                        }
-
-                        WriteRomText("Erasing...", FlashROM1_buf, myWindow, &FlashROM1);
-                        eraseFlashLoop(1, (ULONG)myCD->cd_BoardAddr);
                         flashRom(1, myCD, myWindow);
                         break;
                     }
 
                     case GADFILE2:
                     {
-                        int res = rtEZRequest("This action will erase ROM slot 2\n"
-                                              "Continue anyway?",
-                                              "Yes|No", NULL, NULL);
-
-                        if (!res)
-                        {
-                            break;
-                        }
-
-                        WriteRomText("Erasing...", FlashROM2_buf, myWindow, &FlashROM1);
-                        eraseFlashLoop(2, (ULONG)myCD->cd_BoardAddr);
                         flashRom(2, myCD, myWindow);
                         break;
                     }
@@ -727,13 +717,13 @@ int main()
                                 sprintf(bVersion, "0x%08X", (unsigned)myCD->cd_Rom.er_SerialNumber);
                             }
 
-                            rtEZRequest("Flash Kickstart Programmer v1.6\n"
+                            rtEZRequest("Flash Kickstart Programmer %s\n"
                                         "Created by Andrew (LinuxJedi) Hutchings\n"
                                         "andrew@linuxjedi.co.uk\n"
                                         "This software is released under a GPLv3 license\n\n"
                                         "Based on work by Paul Raspa.\n\n"
                                         "Board version: %s",
-                                        "Cool!", NULL, NULL, bVersion);
+                                        "Cool!", NULL, NULL, VERSION, bVersion);
                             break;
                         }
 

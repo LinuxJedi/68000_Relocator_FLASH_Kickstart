@@ -188,7 +188,7 @@ int main(int argc, char **argv)
     /* Check if application has been started with correct parameters */
     if (argc <= 1)
     {
-        printf("FlashKickstart v3.4\n");
+        printf("FlashKickstart v3.5\n");
         printf("usage: FlashKickstart <option> <filename>\n");
         printf(" -i\tFLASH CHIP INFO\n");
         printf(" -e\tERASE\n");
@@ -401,7 +401,7 @@ int main(int argc, char **argv)
                             fclose(romFile);
 
                             tFlashCommandStatus programFlashStatus = flashIdle;
-                            ULONG baseAddress = (fileSize == KICKSTART_256K) ? ((ULONG)myCD->cd_BoardAddr + KICKSTART_256K) : (ULONG)myCD->cd_BoardAddr;
+                            ULONG baseAddress = (ULONG)myCD->cd_BoardAddr;
 
                             if (strcmp(argv[3], "2") == 0)
                             {
@@ -414,6 +414,11 @@ int main(int argc, char **argv)
                             }
 
                             programFlashStatus = programFlashLoop(fileSize, baseAddress, argv[2]);
+                            if ((programFlashStatus == flashOK) && (fileSize == KICKSTART_256K))
+                            {
+                                baseAddress += KICKSTART_256K;
+                                programFlashStatus = programFlashLoop(fileSize, baseAddress, argv[2]);
+                            }
 
                             if (programFlashStatus != flashOK)
                             {
