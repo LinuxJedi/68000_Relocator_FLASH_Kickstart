@@ -76,7 +76,7 @@ localparam [31:0] serial = 32'h00003030; // Version number
 
 // Change this to 0 to boot from the flash ROMs at power-on
 // Also change useLowRom to 1 to boot from the first flash ROM at power-on
-reg useMotherboardKickstart = 1'b0;
+reg useMotherboardKickstart = 1'b1;
 
 reg [19:0] switchCounter = 20'd0;
 reg hasSwitched = 1'b0;
@@ -89,11 +89,11 @@ reg overlay_n = 1'b0;
 
 reg [3:0] dataOut = 4'h0;
 
-reg useLowRom = 1'b1;
+reg useLowRom = 1'b0;
 
 wire ciaRange               = ADDRESS_HIGH[23:16] == 8'hBF;
 wire autoConfigRange        = ADDRESS_HIGH[23:16] == 8'hE8;
-wire kickstartRange         = ADDRESS_HIGH[23:19] == 5'h1F;
+wire kickstartRange         = ADDRESS_HIGH[23:19] == 5'h1F; // f80000 - ff0000
 wire kickstartOverlayRange  = ADDRESS_HIGH[23:16] == 8'h00;
 wire flashRange             = ADDRESS_HIGH[23:20] == flashBase && flashBaseValid;
 
