@@ -149,6 +149,9 @@ void displayRomInfo(struct romInfo *info, char **output)
     {
         switch(info->major)
         {
+            case 27:
+                kversion = "Kickstart 0.7";
+                break;
             case 30:
                 kversion = "Kickstart 1.0";
                 break;
@@ -161,14 +164,44 @@ void displayRomInfo(struct romInfo *info, char **output)
             case 34:
                 kversion = "Kickstart 1.3";
                 break;
-            case 35:
-                kversion = "Kickstart 1.4";
-                break;
             case 36:
-                kversion = "Kickstart 2.0";
-                break;
+                {
+                    // 36.002 and 36.015 were 1.4
+                    // 36.028, 36.067, 36.141 and 36.143 were 2.0
+                    // 36.207 was 2.02
+                    if (info->minor < 20)
+                    {
+                        kversion = "Kickstart 1.4";
+                    }
+                    else if (info->minor < 200)
+                    {
+                        kversion = "Kickstart 2.0";
+                    }
+                    else
+                    {
+                        kversion = "Kickstart 2.02";
+                    }
+                    break;
+                }
             case 37:
-                kversion = "Kickstart 2.04";
+                {
+                    // 37.074 and 37.092 were 2.03
+                    // 37.175 was 2.04
+                    // 37.210, 37.299, 37.300 and 37.350 were 2.05
+                    if (info->minor < 100)
+                    {
+                        kversion = "Kickstart 2.03";
+                    }
+                    else if (info->minor < 200)
+                    {
+                        kversion = "Kickstart 2.04";
+                    }
+                    else
+                    {
+                        kversion = "Kickstart 2.05";
+                    }
+                    break;
+                }
                 break;
             case 39:
                 kversion = "Kickstart 3.0";
