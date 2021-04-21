@@ -7,6 +7,8 @@ It now supports two flashed kickstart ROMs and has a cleaner interface.
 
 **NOTE 2:** With firmware version 3.4 onwards the the jumper now switches between motherboard and ROM bank 1 as the first ROM. Jumper off for motherboard, jumper on for board ROM1. You will need 39SF040 ROM chips to use 3.4 onwards.
 
+**NOTE 3:** The hardware directory in this tree was a PoC and will not work. Please use PR77's board linked to in the GitHub link above.
+
 # Overview
 To allow for Flash Kickstart images to be mapped in the same address space as existing ROM Kickstart without the need to remove the existing ROM. This design is targeting an accelerated A500(+) system which also require a CPU relocation.
 
