@@ -34,7 +34,7 @@ NET "FLASH_RD_n<1>"  LOC = "P37"  ;
 NET "FLASH_WR_n<0>"  LOC = "P36"  ;
 NET "FLASH_WR_n<1>"  LOC = "P38"  ;
 NET "FLASH_A19"  LOC = "P39"  ;
-NET "SIZE_512K"  LOC = "P6"  ;
+NET "FIRST_ROM"  LOC = "P6"  ;
 
 #PACE: Start of PACE Area Constraints
 

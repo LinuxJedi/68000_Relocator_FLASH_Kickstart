@@ -16,33 +16,6 @@
     You should have received a copy of the GNU General Public License
     along with FLASH_KICKSTART. If not, see <http://www.gnu.org/licenses/>.
 
-    Revision 0.0 - 08.09.2018:
-    Initial revision.
-
-    Revision 1.0 - 12.06.2019:
-    Thanks to https://github.com/niklasekstrom for refactoring and addressing
-    the Auto Config (R) glitch when used with a cascaded chain.
-
-    Revision 2.0 - 22.08.2020:
-    Thanks to https://github.com/niklasekstrom for again refactoring and addressing
-    the issue identified by "The Q!".
-
-    Revision 2.1 - 26.12.2020:
-    Switch power-on default to boot from motherboard ROM.
-
-    Revision 3.0 - 28.12.2020:
-    Hook up A19 and allow for a multi-rom switch if 1MB is installed
-
-    Revision 3.1 - 03.03.2021:
-    Tidy up firmware a bit
-
-    Revision 3.2 - 10.03.2021:
-    Fix version number serial (there are special releases)
-    Allow board to work outside the 8MB area
-
-    Revision 3.3 - 06.04.2021:
-    Fix issue which causes boot loop with ROM2 on some Amigas
-
 */
 
  module FLASH_KICKSTART(
@@ -66,16 +39,15 @@
     output [1:0] FLASH_RD_n,
     output FLASH_A19,
 
-    input SIZE_512K
+    input FIRST_ROM
 );
 
 // Autoconfig params
 localparam [15:0] manufacturer_id = 16'h07B9;
 localparam [7:0] product_id = 8'd104;
-localparam [31:0] serial = 32'h00003030; // Version number
+localparam [31:0] serial = 32'h00003040; // Version number
 
-// Change this to 0 to boot from the flash ROMs at power-on
-// Also change useLowRom to 1 to boot from the first flash ROM at power-on
+// Set by the FIRST_ROM jumper
 reg useMotherboardKickstart = 1'b1;
 
 reg [19:0] switchCounter = 20'd0;
@@ -89,7 +61,14 @@ reg overlay_n = 1'b0;
 
 reg [3:0] dataOut = 4'h0;
 
+// Set by the FIRST_ROM jumper
 reg useLowRom = 1'b0;
+
+// Some things (such as PiStorm) can hold the reset down on first boot until
+// the CPU is ready, if this happens for too long this will cause the ROM
+// to switch, so hold off switching until we have had one CIA access since
+// power on.
+reg firstBoot = 1'b0;
 
 wire ciaRange               = ADDRESS_HIGH[23:16] == 8'hBF;
 wire autoConfigRange        = ADDRESS_HIGH[23:16] == 8'hE8;
@@ -105,7 +84,7 @@ wire relocatorAccess            = relocatorKickstartAccess || autoConfigAccess |
 
 // A19 needs to be address 19 with motherboard ROM
 // Otherwise the inverse of useLowRom
-assign FLASH_A19 = SIZE_512K ? 0 : useMotherboardKickstart ? ADDRESS_HIGH[19] : !useLowRom;
+assign FLASH_A19 = useMotherboardKickstart ? ADDRESS_HIGH[19] : !useLowRom;
 
 always @(posedge E_CLK or posedge RESET_n)
 begin
@@ -114,15 +93,20 @@ begin
         switchCounter <= 20'd0;
         hasSwitched <= 1'b0;
     end
-    else
+    else if (firstBoot)
     begin
         switchCounter <= switchCounter + 20'd1;
         if (!hasSwitched && (&switchCounter))
         begin
             hasSwitched <= 1'b1;
-            useMotherboardKickstart <= (!useLowRom || SIZE_512K) && !useMotherboardKickstart;
-            useLowRom <= !useLowRom && useMotherboardKickstart && !SIZE_512K;
+            useMotherboardKickstart <= !useLowRom && !useMotherboardKickstart;
+            useLowRom <= !useLowRom && useMotherboardKickstart;
         end
+    end
+    else
+    begin
+        useMotherboardKickstart <= FIRST_ROM;
+        useLowRom <= !FIRST_ROM;
     end
 end
 
@@ -131,7 +115,10 @@ begin
     if (!RESET_n)
         overlay_n <= 1'b0;
     else if (ciaRange)
+    begin
+        firstBoot <= 1'b1;
         overlay_n <= 1'b1;
+    end
 end
 
 always @(posedge CPU_AS_n or negedge RESET_n)
@@ -168,11 +155,11 @@ begin
     if (ADDRESS_LOW[7:6] == 2'd0)
         case (ADDRESS_LOW[5:1])
             5'h00: dataOut <= 4'b1100; // Zorro II, non-RAM board
-            5'h01: dataOut <= SIZE_512K ? 4'b0100 : 4'b0101; // 512K / 1M
+            5'h01: dataOut <= 4'b0101; // 1M
             // Inverted bits from here
             5'h02: dataOut <= ~product_id[7:4];
             5'h03: dataOut <= ~product_id[3:0];
-            5'h04: dataOut <= ~4'b0000; // Any memory area, not just 8MN. Board cannot be shut-up
+            5'h04: dataOut <= ~4'b0000; // Any memory area. Board cannot be shut-up
             // 5 - 7 reserved, set to inverted zero using fall-through
             5'h08: dataOut <= ~manufacturer_id[15:12];
             5'h09: dataOut <= ~manufacturer_id[11:8];
