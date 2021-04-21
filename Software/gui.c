@@ -39,7 +39,7 @@
 struct ReqToolsBase *ReqToolsBase;
 struct Library *ExpansionBase = NULL;
 
-#define VERSION "v1.7"
+#define VERSION "v1.8"
 
 #define LOOP_TIMEOUT        (ULONG)10000
 #define KICKSTART_256K      (ULONG)(256 * 1024)
@@ -626,16 +626,30 @@ int main()
     }
     else
     {
-        getRom(1, myCD, myWindow);
-
-        if ((ULONG)myCD->cd_BoardSize <= (ULONG)(512 * 1024))
+        if ((ULONG)myCD->cd_BoardSize == (ULONG)(512 * 1024))
         {
             // Jumper removed, only 1 ROM
+            getRom(1, myCD, myWindow);
             OffGadget(&FlashROM2, myWindow, NULL);
             OffGadget(&LoadFile2, myWindow, NULL);
         }
+        else if ((ULONG)myCD->cd_BoardSize < (ULONG)(512 * 1024))
+        {
+            // Autoconfig failed due to our of Z2 space
+            rtEZRequest("Flash Kickstart board failed autoconfigure.\n"
+                        "You probably have 8MB of fast RAM on the Zorro II bus\n"
+                        "The board requires 1MB of this to operate.\n\n"
+                        "Please reduce / disable your fast RAM, reboot and try again.",
+                        "OK", NULL, NULL);
+            OffGadget(&EraseButton, myWindow, NULL);
+            OffGadget(&LoadFile1, myWindow, NULL);
+            OffGadget(&LoadFile2, myWindow, NULL);
+            OffGadget(&FlashROM1, myWindow, NULL);
+            OffGadget(&FlashROM2, myWindow, NULL);
+        }
         else
         {
+            getRom(1, myCD, myWindow);
             getRom(2, myCD, myWindow);
         }
     }

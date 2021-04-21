@@ -5,6 +5,8 @@ It now supports two flashed kickstart ROMs and has a cleaner interface.
 
 **NOTE:** If you are using FK 3.0 command line tool or FlashKickstart GUI tool you will need to use the 3.0 Xilinx firmware too. Otherwise hi/lo ROMs will be the mapped to the same address.
 
+**NOTE 2:** With firmware version 3.4 onwards the the jumper now switches between motherboard and ROM bank 1 as the first ROM. Jumper off for motherboard, jumper on for board ROM1. You will need 39SF040 ROM chips to use 3.4 onwards.
+
 # Overview
 To allow for Flash Kickstart images to be mapped in the same address space as existing ROM Kickstart without the need to remove the existing ROM. This design is targeting an accelerated A500(+) system which also require a CPU relocation.
 
@@ -29,7 +31,7 @@ You can then program with any ROM you wish. You should not use byte-swapped ROMs
 In principle the operation is fairly simple. A CPLD is used to switch between the ROM Kickstart on the Motherboard or the two Flash Kickstart on the CPU Relocator. Switching is performed by an active /RESET (CTRL-A-A) without interruption for longer than 1 second. Shorter /RESET durations will simply just reset the Amiga. After a POR (Power On Reset) by default the Kickstart on the Motherboard will be used.
 
 ## ROM based Kickstart
-When ROM Kickstart is being used, the hardware simply passed /AS to the Amiga Motherboard to allow GARY perform the address decode and chip select of the internal ROM. During this process, the Flash Kickstart is simply not used - except when programming. A Zorro II space of 512K or 1MB (depending on jumper) is requested and allocated by the Amiga which maps to the Flash devices.
+When ROM Kickstart is being used, the hardware simply passed /AS to the Amiga Motherboard to allow GARY perform the address decode and chip select of the internal ROM. During this process, the Flash Kickstart is simply not used - except when programming. A Zorro II space of 1MB is requested and allocated by the Amiga which maps to the Flash devices.
 
 When programming the Flash devices, access is via this Zorro II space. Programming of the Flash devices can only be performed when ROM Kickstart is being used.
 
