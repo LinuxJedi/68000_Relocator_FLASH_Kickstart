@@ -16,6 +16,37 @@
     You should have received a copy of the GNU General Public License
     along with FLASH_KICKSTART. If not, see <http://www.gnu.org/licenses/>.
 
+    Revision 0.0 - 08.09.2018:
+    Initial revision.
+
+    Revision 1.0 - 12.06.2019:
+    Thanks to https://github.com/niklasekstrom for refactoring and addressing
+    the Auto Config (R) glitch when used with a cascaded chain.
+
+    Revision 2.0 - 22.08.2020:
+    Thanks to https://github.com/niklasekstrom for again refactoring and addressing
+    the issue identified by "The Q!".
+
+    Revision 2.1 - 26.12.2020:
+    Switch power-on default to boot from motherboard ROM.
+
+    Revision 3.0 - 2020-12-28:
+    * Hook up A19 and allow for a multi-rom switch if 1MB is installed
+
+    Revision 3.1 - 2021-03-03:
+    * Tidy up firmware a bit
+
+    Revision 3.2 - 2021-03-10:
+    * Fix version number serial (there are special releases)
+    * Allow board to work outside the 8MB area
+
+    Revision 3.3 - 2021-04-06:
+    * Fix issue which causes boot loop with ROM2 on some Amigas
+
+    Revision 3.4 - 2021-04-22:
+    * Jumper now selects which ROM to boot from first (motherboard or ROM1),
+      no more 512K / 1 ROM support.
+    * Fix issue where held reset on first boot switches ROM (PiStorm boot)
 */
 
  module FLASH_KICKSTART(
