@@ -39,7 +39,15 @@
 struct ReqToolsBase *ReqToolsBase;
 struct Library *ExpansionBase = NULL;
 
-#define VERSION "v1.8"
+struct TextAttr font =
+{
+        "topaz.font",
+        8,
+        FS_NORMAL,
+        0
+};
+
+#define VERSION "v1.9"
 
 #define LOOP_TIMEOUT        (ULONG)10000
 #define KICKSTART_256K      (ULONG)(256 * 1024)
@@ -118,7 +126,7 @@ struct Border SharedBordersInvert[] =
 
 struct IntuiText QuitButton_text =
 {
-    1, 0, JAM2, 12, 6, NULL, (UBYTE *)"Quit", NULL
+    1, 0, JAM2, 12, 6, &font, (UBYTE *)"Quit", NULL
 };
 
 #define GADQUIT 7
@@ -135,7 +143,7 @@ struct Gadget QuitButton =
 
 struct IntuiText AboutButton_text =
 {
-    1, 0, JAM2, 8, 6, NULL, (UBYTE *)"About", NULL
+    1, 0, JAM2, 8, 6, &font, (UBYTE *)"About", NULL
 };
 
 #define GADABOUT 6
@@ -152,7 +160,7 @@ struct Gadget AboutButton =
 
 struct IntuiText EraseButton_text =
 {
-    1, 0, JAM2, 8, 6, NULL, (UBYTE *)"Erase ROMs", NULL
+    1, 0, JAM2, 8, 6, &font, (UBYTE *)"Erase ROMs", NULL
 };
 
 #define GADERASE 5
@@ -169,7 +177,7 @@ struct Gadget EraseButton =
 
 struct IntuiText LoadFile_text =
 {
-    1, 0, JAM2, 8, 6, NULL, (UBYTE *)"Load File", NULL
+    1, 0, JAM2, 8, 6, &font, (UBYTE *)"Load File", NULL
 };
 
 #define GADFILE2 4
@@ -200,8 +208,8 @@ UBYTE FlashROM2_buf[64];
 
 struct IntuiText FlashROM2_text[] =
 {
-    1, 0, JAM2, -100, 4, NULL, (UBYTE *)"FLASH ROM 2:", &FlashROM2_text[1],
-    1, 0, JAM2, 4, 4, NULL, (UBYTE *)FlashROM2_buf, NULL
+    1, 0, JAM2, -100, 4, &font, (UBYTE *)"FLASH ROM 2:", &FlashROM2_text[1],
+    1, 0, JAM2, 4, 4, &font, (UBYTE *)FlashROM2_buf, NULL
 };
 
 #define GADFLASH2 2
@@ -220,8 +228,8 @@ UBYTE FlashROM1_buf[64];
 
 struct IntuiText FlashROM1_text[] =
 {
-    1, 0, JAM2, -100, 4, NULL, (UBYTE *)"FLASH ROM 1:", &FlashROM1_text[1],
-    1, 0, JAM2, 4, 4, NULL, (UBYTE *)FlashROM1_buf, NULL
+    1, 0, JAM2, -100, 4, &font, (UBYTE *)"FLASH ROM 1:", &FlashROM1_text[1],
+    1, 0, JAM2, 4, 4, &font, (UBYTE *)FlashROM1_buf, NULL
 };
 
 #define GADFLASH1 1
@@ -240,8 +248,8 @@ UBYTE Motherboard_buf[64];
 
 struct IntuiText Motherboard_text[] =
 {
-    1, 0, JAM2, -108, 4, NULL, (UBYTE *)"Internal ROM:", &Motherboard_text[1],
-    1, 0, JAM2, 4, 4, NULL, (UBYTE *)Motherboard_buf, NULL
+    1, 0, JAM2, -108, 4, &font, (UBYTE *)"Internal ROM:", &Motherboard_text[1],
+    1, 0, JAM2, 4, 4, &font, (UBYTE *)Motherboard_buf, NULL
 };
 
 #define GADMOTHER 0
